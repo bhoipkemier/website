@@ -544,16 +544,16 @@
       <div class="config-selector-wrapper">
         <span class="config-label">Map Preset:</span>
         <select class="config-select" id="mapSelect">
-          <option value="0">Map 1 (Balanced)</option>
-          <option value="1">Map 2 (Perimeter)</option>
-          <option value="2">Map 3 (Corners & Edges)</option>
-          <option value="3">Map 4 (Vertical Focus)</option>
-          <option value="4">Map 5 (Central Grid)</option>
-          <option value="5">Map 6 (Center Cluster)</option>
-          <option value="6">Map 7 (Scatter)</option>
-          <option value="7">Map 8 (Horizontal Focus)</option>
-          <option value="8">Map 9 (Diagonal Spread)</option>
-          <option value="9">Map 10 (Strategic Mix)</option>
+          <option value="0">Map 1</option>
+          <option value="1">Map 2</option>
+          <option value="2">Map 3</option>
+          <option value="3">Map 4</option>
+          <option value="4">Map 5</option>
+          <option value="5">Map 6</option>
+          <option value="6">Map 7</option>
+          <option value="7">Map 8</option>
+          <option value="8">Map 9</option>
+          <option value="9">Map 10</option>
           <option value="random">🎲 Random Map</option>
         </select>
       </div>
@@ -1120,65 +1120,7 @@
       updateTargetBanner();
     }
 
-    // ------------------------------------------------------------------
-    // Smart Target Advisor Algorithm
-    // ------------------------------------------------------------------
-    smartHintBtn.addEventListener('click', () => {
-      playSound('click');
-
-      // Find unsunk ships
-      const unsunkShips = currentConfig.ships.filter(ship => {
-        const state = shipHealthState[ship.name];
-        return state.hits.size < state.size;
-      });
-
-      if (unsunkShips.length === 0) {
-        showToast("All ships are already sunk!");
-        return;
-      }
-
-      // 1. Hunt Mode: If there's an active unsunk hit, target adjacent cells
-      let targetCandidates = [];
-      
-      unsunkShips.forEach(ship => {
-        const state = shipHealthState[ship.name];
-        if (state.hits.size > 0 && state.hits.size < state.size) {
-          // Ship has hits but isn't sunk yet - check adjacent coordinates
-          state.coords.forEach(coord => {
-            if (!firedHistory.has(coord)) {
-              targetCandidates.push(coord);
-            }
-          });
-        }
-      });
-
-      // 2. Search Mode: Recommend remaining unshot coordinates with highest probability
-      if (targetCandidates.length === 0) {
-        unsunkShips.forEach(ship => {
-          ship.coords.forEach(coord => {
-            if (!firedHistory.has(coord)) {
-              targetCandidates.push(coord);
-            }
-          });
-        });
-      }
-
-      if (targetCandidates.length > 0) {
-        // Pick one recommended target
-        const recommendedCoord = targetCandidates[Math.floor(Math.random() * targetCandidates.length)];
-        const row = recommendedCoord.charAt(0);
-        const col = recommendedCoord.slice(1);
-
-        showPopup('warning', 'SMART ADVISOR', `High Probability Target: ${row}-${col}`, '💡');
-
-        // Auto highlight suggested letter
-        selectedLetter = row;
-        clearLetterHighlights();
-        const letterBtn = letterKeypad.querySelector(`[data-letter="${row}"]`);
-        if (letterBtn) letterBtn.classList.add('selected-letter');
-        updateTargetBanner();
-      }
-    });
+    
 
     // ------------------------------------------------------------------
     // Controls & Event Listeners
