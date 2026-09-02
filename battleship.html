@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Battleship Smart System</title>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #131b2e;
+      --bg-card-hover: #1c2742;
+      --accent-cyan: #00f5d4;
+      --accent-blue: #00b4d8;
+      --accent-red: #ff3366;
+      --accent-gold: #ffb703;
+      --accent-miss: #48cae4;
+      --text-main: #f8f9fa;
+      --text-muted: #8d99ae;
+      --border-color: #2b3a5a;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Header & Control Bar */
+    header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-icon {
+      font-size: 1.2rem;
+      -webkit-text-fill-color: initial;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: #1e2942;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+      background: var(--border-color);
+    }
+
+    .config-selector-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0d1424;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    .config-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    select.config-select {
+      background: transparent;
+      border: none;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Fleet Status Bar */
+    .fleet-status-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .fleet-list {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .ship-badge {
+      background: #0d1424;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .ship-badge.sunk {
+      background: rgba(255, 51, 102, 0.15);
+      border-color: var(--accent-red);
+      opacity: 0.6;
+    }
+
+    .ship-name {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .ship-badge.sunk .ship-name {
+      color: var(--accent-red);
+      text-decoration: line-through;
+    }
+
+    .ship-cells {
+      display: flex;
+      gap: 2px;
+    }
+
+    .cell-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+    }
+
+    .cell-dot.hit {
+      background: var(--accent-red);
+    }
+
+    .ship-badge.sunk .cell-dot {
+      background: var(--accent-red);
+    }
+
+    /* Stats Display */
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      background: #0d1424;
+      border-radius: 10px;
+      padding: 8px 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stat-value.hits { color: var(--accent-red); }
+    .stat-value.misses { color: var(--accent-miss); }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Target Banner */
+    .target-banner {
+      background: linear-gradient(135deg, #131b2e, #1a253f);
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.05);
+      transition: all 0.3s ease;
+      min-height: 70px;
+    }
+
+    .target-banner.active-row {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 16px rgba(0, 245, 212, 0.2);
+    }
+
+    .target-instruction {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .target-value {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--accent-cyan);
+      letter-spacing: 1px;
+    }
+
+    /* Dual Keypad Section */
+    .keypads-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .keypad-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .keypad-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .key-btn {
+      background: #1c2742;
+      border: 1.5px solid #2d3c5f;
+      color: var(--text-main);
+      font-size: 1.25rem;
+      font-weight: 800;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .key-btn:active {
+      transform: scale(0.94);
+      background: #28375c;
+    }
+
+    /* Letter keypad selected state */
+    .key-btn.selected-letter {
+      background: var(--accent-cyan);
+      color: #090d16;
+      border-color: #ffffff;
+      box-shadow: 0 0 16px rgba(0, 245, 212, 0.6);
+      transform: translateY(-2px);
+    }
+
+    /* Number keypad state */
+    .key-btn.number-key {
+      background: #18233a;
+      border-color: #2e3e63;
+      color: var(--accent-cyan);
+    }
+
+    .key-btn.number-key:active {
+      background: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    /* Action Footer Buttons */
+    .action-footer {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .action-btn {
+      flex: 1;
+      background: #19243b;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:active {
+      transform: scale(0.96);
+      background: #253456;
+    }
+
+    .action-btn.hint-btn {
+      background: rgba(255, 183, 3, 0.12);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+
+    /* Popup Modal Overlay */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .popup-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .popup-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 85%;
+      max-width: 340px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      transform: scale(0.7);
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .popup-overlay.show .popup-card {
+      transform: scale(1);
+    }
+
+    .popup-icon {
+      font-size: 3.5rem;
+      line-height: 1;
+      animation: pulse 1s infinite alternate;
+    }
+
+    .popup-title {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .popup-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .popup-card.type-hit {
+      border-color: var(--accent-red);
+      box-shadow: 0 0 40px rgba(255, 51, 102, 0.4);
+    }
+    .popup-card.type-hit .popup-title { color: var(--accent-red); }
+
+    .popup-card.type-miss {
+      border-color: var(--accent-miss);
+      box-shadow: 0 0 40px rgba(72, 202, 228, 0.3);
+    }
+    .popup-card.type-miss .popup-title { color: var(--accent-miss); }
+
+    .popup-card.type-sunk {
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 50px rgba(255, 183, 3, 0.5);
+    }
+    .popup-card.type-sunk .popup-title { color: var(--accent-gold); }
+
+    .popup-card.type-warning {
+      border-color: #ff9f1c;
+    }
+    .popup-card.type-warning .popup-title { color: #ff9f1c; }
+
+    .popup-dismiss-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
+    }
+
+    /* Toast Alert */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1f2d4a;
+      border: 1px solid var(--accent-cyan);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      z-index: 900;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Header -->
+    <header>
+      <div class="header-top">
+        <div class="title">
+          <span class="title-icon">⚓</span> Battleship Smart
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="soundToggleBtn" title="Toggle Audio">🔊</button>
+          <button class="icon-btn" id="resetBtn" title="Reset Game">🔄</button>
+        </div>
+      </div>
+
+      <div class="config-selector-wrapper">
+        <span class="config-label">Map Preset:</span>
+        <select class="config-select" id="mapSelect">
+          <option value="0">Map 1 (Balanced)</option>
+          <option value="1">Map 2 (Perimeter)</option>
+          <option value="2">Map 3 (Corners & Edges)</option>
+          <option value="3">Map 4 (Vertical Focus)</option>
+          <option value="4">Map 5 (Central Grid)</option>
+          <option value="5">Map 6 (Center Cluster)</option>
+          <option value="6">Map 7 (Scatter)</option>
+          <option value="7">Map 8 (Horizontal Focus)</option>
+          <option value="8">Map 9 (Diagonal Spread)</option>
+          <option value="9">Map 10 (Strategic Mix)</option>
+          <option value="random">🎲 Random Map</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Fleet Status Card -->
+    <div class="fleet-status-card">
+      <div class="section-header">
+        <span>Fleet Status</span>
+        <span id="fleetCountText">5 Operational</span>
+      </div>
+      <div class="fleet-list" id="fleetList">
+        <!-- Generated by JS -->
+      </div>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-value" id="shotsCount">0</span>
+          <span class="stat-label">Shots</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value hits" id="hitsCount">0</span>
+          <span class="stat-label">Hits</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value misses" id="missesCount">0</span>
+          <span class="stat-label">Misses</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="accuracyCount">0%</span>
+          <span class="stat-label">Accuracy</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Target Display Banner -->
+    <div class="target-banner" id="targetBanner">
+      <div class="target-instruction" id="targetInstruction">Step 1: Tap a Row Letter (A–J)</div>
+      <div class="target-value" id="targetDisplay">SELECT LETTER</div>
+    </div>
+
+    <!-- Keypads -->
+    <div class="keypads-container">
+      
+      <!-- Letter Keypad -->
+      <div class="keypad-group">
+        <div class="keypad-header">
+          <span>Row Selection</span>
+          <span style="color: var(--accent-cyan);">A – J</span>
+        </div>
+        <div class="keypad-grid" id="letterKeypad">
+          <button class="key-btn letter-key" data-letter="A">A</button>
+          <button class="key-btn letter-key" data-letter="B">B</button>
+          <button class="key-btn letter-key" data-letter="C">C</button>
+          <button class="key-btn letter-key" data-letter="D">D</button>
+          <button class="key-btn letter-key" data-letter="E">E</button>
+          <button class="key-btn letter-key" data-letter="F">F</button>
+          <button class="key-btn letter-key" data-letter="G">G</button>
+          <button class="key-btn letter-key" data-letter="H">H</button>
+          <button class="key-btn letter-key" data-letter="I">I</button>
+          <button class="key-btn letter-key" data-letter="J">J</button>
+        </div>
+      </div>
+
+      <!-- Number Keypad -->
+      <div class="keypad-group">
+        <div class="keypad-header">
+          <span>Column Selection (Auto-Fires)</span>
+          <span style="color: var(--accent-blue);">1 – 10</span>
+        </div>
+        <div class="keypad-grid" id="numberKeypad">
+          <button class="key-btn number-key" data-number="1">1</button>
+          <button class="key-btn number-key" data-number="2">2</button>
+          <button class="key-btn number-key" data-number="3">3</button>
+          <button class="key-btn number-key" data-number="4">4</button>
+          <button class="key-btn number-key" data-number="5">5</button>
+          <button class="key-btn number-key" data-number="6">6</button>
+          <button class="key-btn number-key" data-number="7">7</button>
+          <button class="key-btn number-key" data-number="8">8</button>
+          <button class="key-btn number-key" data-number="9">9</button>
+          <button class="key-btn number-key" data-number="10">10</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action Footer -->
+    <div class="action-footer">
+      <button class="action-btn hint-btn" id="smartHintBtn">
+        💡 Smart Advisor
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Popup Feedback Overlay Modal -->
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup-card" id="popupCard">
+      <div class="popup-icon" id="popupIcon">💥</div>
+      <div class="popup-title" id="popupTitle">HIT!</div>
+      <div class="popup-subtitle" id="popupSubtitle">Target B-5 Damaged</div>
+      <div class="popup-dismiss-hint">Tap anywhere to continue</div>
+    </div>
+  </div>
+
+  <!-- Quick Toast -->
+  <div class="toast" id="toast">Select a letter first!</div>
+
+  <script>
+    // ------------------------------------------------------------------
+    // 10 Hardcoded Battleship Configurations (10x10 Grids: A-J, 1-10)
+    // Fleet: Carrier (5), Battleship (4), Cruiser (3), Submarine (3), Destroyer (2)
+    // ------------------------------------------------------------------
+    const CONFIGURATIONS = [
+      // Map 1
+      {
+        id: 1,
+        name: "Map 1",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["A1", "A2", "A3", "A4", "A5"] },
+          { name: "Battleship", size: 4, coords: ["C3", "D3", "E3", "F3"] },
+          { name: "Cruiser", size: 3, coords: ["H2", "H3", "H4"] },
+          { name: "Submarine", size: 3, coords: ["B8", "C8", "D8"] },
+          { name: "Destroyer", size: 2, coords: ["J9", "J10"] }
+        ]
+      },
+      // Map 2
+      {
+        id: 2,
+        name: "Map 2",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["J1", "J2", "J3", "J4", "J5"] },
+          { name: "Battleship", size: 4, coords: ["B2", "B3", "B4", "B5"] },
+          { name: "Cruiser", size: 3, coords: ["D7", "E7", "F7"] },
+          { name: "Submarine", size: 3, coords: ["G10", "H10", "I10"] },
+          { name: "Destroyer", size: 2, coords: ["E1", "F1"] }
+        ]
+      },
+      // Map 3
+      {
+        id: 3,
+        name: "Map 3",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["C10", "D10", "E10", "F10", "G10"] },
+          { name: "Battleship", size: 4, coords: ["A1", "B1", "C1", "D1"] },
+          { name: "Cruiser", size: 3, coords: ["E4", "E5", "E6"] },
+          { name: "Submarine", size: 3, coords: ["I3", "I4", "I5"] },
+          { name: "Destroyer", size: 2, coords: ["G7", "G8"] }
+        ]
+      },
+      // Map 4
+      {
+        id: 4,
+        name: "Map 4",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["B3", "C3", "D3", "E3", "F3"] },
+          { name: "Battleship", size: 4, coords: ["H5", "H6", "H7", "H8"] },
+          { name: "Cruiser", size: 3, coords: ["A8", "B8", "C8"] },
+          { name: "Submarine", size: 3, coords: ["D6", "E6", "F6"] },
+          { name: "Destroyer", size: 2, coords: ["J1", "J2"] }
+        ]
+      },
+      // Map 5
+      {
+        id: 5,
+        name: "Map 5",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["E2", "E3", "E4", "E5", "E6"] },
+          { name: "Battleship", size: 4, coords: ["A5", "B5", "C5", "D5"] },
+          { name: "Cruiser", size: 3, coords: ["G1", "H1", "I1"] },
+          { name: "Submarine", size: 3, coords: ["G8", "H8", "I8"] },
+          { name: "Destroyer", size: 2, coords: ["C9", "C10"] }
+        ]
+      },
+      // Map 6
+      {
+        id: 6,
+        name: "Map 6",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["D5", "E5", "F5", "G5", "H5"] },
+          { name: "Battleship", size: 4, coords: ["A2", "A3", "A4", "A5"] },
+          { name: "Cruiser", size: 3, coords: ["C8", "D8", "E8"] },
+          { name: "Submarine", size: 3, coords: ["J6", "J7", "J8"] },
+          { name: "Destroyer", size: 2, coords: ["H2", "I2"] }
+        ]
+      },
+      // Map 7
+      {
+        id: 7,
+        name: "Map 7",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["F1", "F2", "F3", "F4", "F5"] },
+          { name: "Battleship", size: 4, coords: ["B9", "C9", "D9", "E9"] },
+          { name: "Cruiser", size: 3, coords: ["A1", "A2", "A3"] },
+          { name: "Submarine", size: 3, coords: ["H3", "H4", "H5"] },
+          { name: "Destroyer", size: 2, coords: ["I8", "I9"] }
+        ]
+      },
+      // Map 8
+      {
+        id: 8,
+        name: "Map 8",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["G6", "G7", "G8", "G9", "G10"] },
+          { name: "Battleship", size: 4, coords: ["B2", "C2", "D2", "E2"] },
+          { name: "Cruiser", size: 3, coords: ["J2", "J3", "J4"] },
+          { name: "Submarine", size: 3, coords: ["B6", "C6", "D6"] },
+          { name: "Destroyer", size: 2, coords: ["A9", "A10"] }
+        ]
+      },
+      // Map 9
+      {
+        id: 9,
+        name: "Map 9",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["A4", "B4", "C4", "D4", "E4"] },
+          { name: "Battleship", size: 4, coords: ["F7", "F8", "F9", "F10"] },
+          { name: "Cruiser", size: 3, coords: ["H1", "H2", "H3"] },
+          { name: "Submarine", size: 3, coords: ["B8", "C8", "D8"] },
+          { name: "Destroyer", size: 2, coords: ["D2", "E2"] }
+        ]
+      },
+      // Map 10
+      {
+        id: 10,
+        name: "Map 10",
+        ships: [
+          { name: "Carrier", size: 5, coords: ["I4", "I5", "I6", "I7", "I8"] },
+          { name: "Battleship", size: 4, coords: ["D1", "E1", "F1", "G1"] },
+          { name: "Cruiser", size: 3, coords: ["B5", "B6", "B7"] },
+          { name: "Submarine", size: 3, coords: ["C9", "D9", "E9"] },
+          { name: "Destroyer", size: 2, coords: ["A2", "B2"] }
+        ]
+      }
+    ];
+
+    // ------------------------------------------------------------------
+    // Game State Variables
+    // ------------------------------------------------------------------
+    let currentConfig = null;
+    let selectedLetter = null;
+    let firedHistory = new Set(); // Stores coords like "B5"
+    let hitCoords = new Set();
+    let missesCount = 0;
+    let isAudioMuted = false;
+    let shipHealthState = {}; // { "Carrier": { size: 5, hits: Set() }, ... }
+    let popupTimer = null;
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (isAudioMuted) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'hit') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'miss') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'sunk') {
+        [220, 180, 140, 100].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, now + i * 0.1);
+          g.gain.setValueAtTime(0.3, now + i * 0.1);
+          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.2);
+          o.start(now + i * 0.1);
+          o.stop(now + i * 0.1 + 0.2);
+        });
+      } else if (type === 'victory') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + i * 0.12);
+          g.gain.setValueAtTime(0.3, now + i * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.3);
+          o.start(now + i * 0.12);
+          o.stop(now + i * 0.12 + 0.3);
+        });
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // DOM Elements
+    // ------------------------------------------------------------------
+    const mapSelect = document.getElementById('mapSelect');
+    const resetBtn = document.getElementById('resetBtn');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const fleetListEl = document.getElementById('fleetList');
+    const fleetCountText = document.getElementById('fleetCountText');
+    
+    const shotsCountEl = document.getElementById('shotsCount');
+    const hitsCountEl = document.getElementById('hitsCount');
+    const missesCountEl = document.getElementById('missesCount');
+    const accuracyCountEl = document.getElementById('accuracyCount');
+
+    const targetBanner = document.getElementById('targetBanner');
+    const targetInstruction = document.getElementById('targetInstruction');
+    const targetDisplay = document.getElementById('targetDisplay');
+
+    const letterKeypad = document.getElementById('letterKeypad');
+    const numberKeypad = document.getElementById('numberKeypad');
+    const smartHintBtn = document.getElementById('smartHintBtn');
+
+    const popupOverlay = document.getElementById('popupOverlay');
+    const popupCard = document.getElementById('popupCard');
+    const popupIcon = document.getElementById('popupIcon');
+    const popupTitle = document.getElementById('popupTitle');
+    const popupSubtitle = document.getElementById('popupSubtitle');
+    const toast = document.getElementById('toast');
+
+    // ------------------------------------------------------------------
+    // Initialization
+    // ------------------------------------------------------------------
+    function startNewGame() {
+      const selectedValue = mapSelect.value;
+      if (selectedValue === 'random') {
+        const randomIndex = Math.floor(Math.random() * CONFIGURATIONS.length);
+        currentConfig = CONFIGURATIONS[randomIndex];
+      } else {
+        currentConfig = CONFIGURATIONS[parseInt(selectedValue, 10)] || CONFIGURATIONS[0];
+      }
+
+      selectedLetter = null;
+      firedHistory.clear();
+      hitCoords.clear();
+      missesCount = 0;
+
+      shipHealthState = {};
+      currentConfig.ships.forEach(ship => {
+        shipHealthState[ship.name] = {
+          size: ship.size,
+          coords: ship.coords,
+          hits: new Set()
+        };
+      });
+
+      updateTargetBanner();
+      renderFleetStatus();
+      updateStats();
+      clearLetterHighlights();
+      hidePopup();
+    }
+
+    function renderFleetStatus() {
+      fleetListEl.innerHTML = '';
+      let operationalCount = 0;
+
+      currentConfig.ships.forEach(ship => {
+        const state = shipHealthState[ship.name];
+        const isSunk = state.hits.size === state.size;
+        if (!isSunk) operationalCount++;
+
+        const badge = document.createElement('div');
+        badge.className = `ship-badge ${isSunk ? 'sunk' : ''}`;
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'ship-name';
+        nameEl.textContent = ship.name;
+
+        const cellsEl = document.createElement('div');
+        cellsEl.className = 'ship-cells';
+
+        for (let i = 0; i < ship.size; i++) {
+          const dot = document.createElement('div');
+          dot.className = `cell-dot ${i < state.hits.size ? 'hit' : ''}`;
+          cellsEl.appendChild(dot);
+        }
+
+        badge.appendChild(nameEl);
+        badge.appendChild(cellsEl);
+        fleetListEl.appendChild(badge);
+      });
+
+      fleetCountText.textContent = `${operationalCount} Operational`;
+    }
+
+    function updateStats() {
+      const totalShots = firedHistory.size;
+      const totalHits = hitCoords.size;
+      const accuracy = totalShots > 0 ? Math.round((totalHits / totalShots) * 100) : 0;
+
+      shotsCountEl.textContent = totalShots;
+      hitsCountEl.textContent = totalHits;
+      missesCountEl.textContent = missesCount;
+      accuracyCountEl.textContent = `${accuracy}%`;
+    }
+
+    function updateTargetBanner() {
+      if (!selectedLetter) {
+        targetBanner.classList.remove('active-row');
+        targetInstruction.textContent = "Step 1: Tap a Row Letter (A–J)";
+        targetDisplay.textContent = "SELECT LETTER";
+        targetDisplay.style.color = "var(--text-muted)";
+      } else {
+        targetBanner.classList.add('active-row');
+        targetInstruction.textContent = `Row ${selectedLetter} Selected — Step 2: Tap a Number (1–10)`;
+        targetDisplay.textContent = `${selectedLetter} - [ ? ]`;
+        targetDisplay.style.color = "var(--accent-cyan)";
+      }
+    }
+
+    function clearLetterHighlights() {
+      const buttons = letterKeypad.querySelectorAll('.key-btn');
+      buttons.forEach(btn => btn.classList.remove('selected-letter'));
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function showPopup(type, title, subtitle, icon, isVictory = false) {
+      clearTimeout(popupTimer);
+      popupCard.className = `popup-card type-${type}`;
+      popupIcon.textContent = icon;
+      popupTitle.textContent = title;
+      popupSubtitle.textContent = subtitle;
+
+      popupOverlay.classList.add('show');
+
+      if (!isVictory) {
+        popupTimer = setTimeout(() => {
+          hidePopup();
+        }, 1600);
+      }
+    }
+
+    function hidePopup() {
+      popupOverlay.classList.remove('show');
+    }
+
+    popupOverlay.addEventListener('click', hidePopup);
+
+    // ------------------------------------------------------------------
+    // Core Game Mechanics (Letter Select & Auto-Fire on Number)
+    // ------------------------------------------------------------------
+    letterKeypad.addEventListener('click', (e) => {
+      const btn = e.target.closest('.key-btn');
+      if (!btn) return;
+
+      playSound('click');
+      selectedLetter = btn.dataset.letter;
+      
+      clearLetterHighlights();
+      btn.classList.add('selected-letter');
+      updateTargetBanner();
+    });
+
+    numberKeypad.addEventListener('click', (e) => {
+      const btn = e.target.closest('.key-btn');
+      if (!btn) return;
+
+      if (!selectedLetter) {
+        playSound('click');
+        showToast("⚠️ Select a Letter (A–J) first!");
+        return;
+      }
+
+      const selectedNumber = btn.dataset.number;
+      const targetCoord = `${selectedLetter}${selectedNumber}`;
+
+      // Auto-Fire Process
+      fireShot(targetCoord);
+    });
+
+    function fireShot(coord) {
+      if (firedHistory.has(coord)) {
+        playSound('click');
+        showPopup('warning', 'ALREADY FIRED', `Target ${coord} was shot previously`, '⚠️');
+        return;
+      }
+
+      firedHistory.add(coord);
+
+      // Check Hit vs Miss
+      let hitShipName = null;
+      let isSunk = false;
+
+      currentConfig.ships.forEach(ship => {
+        if (ship.coords.includes(coord)) {
+          hitShipName = ship.name;
+          hitCoords.add(coord);
+          shipHealthState[ship.name].hits.add(coord);
+
+          if (shipHealthState[ship.name].hits.size === shipHealthState[ship.name].size) {
+            isSunk = true;
+          }
+        }
+      });
+
+      if (!hitShipName) {
+        missesCount++;
+        playSound('miss');
+        showPopup('miss', 'MISS', `No ship at coordinate ${coord}`, '💦');
+      } else if (isSunk) {
+        playSound('sunk');
+        showPopup('sunk', 'SHIP SUNK!', `You destroyed the ${hitShipName}! (${coord})`, '🔥');
+      } else {
+        playSound('hit');
+        showPopup('hit', 'HIT!', `Direct hit on target ${coord}!`, '💥');
+      }
+
+      renderFleetStatus();
+      updateStats();
+
+      // Check Victory Condition (17 total hits required across 5 ships)
+      if (hitCoords.size === 17) {
+        setTimeout(() => {
+          playSound('victory');
+          showPopup('sunk', 'VICTORY!', `All 5 enemy ships destroyed in ${firedHistory.size} shots!`, '🏆', true);
+        }, 1800);
+      }
+
+      // Reset Letter selection state for next shot
+      selectedLetter = null;
+      clearLetterHighlights();
+      updateTargetBanner();
+    }
+
+    // ------------------------------------------------------------------
+    // Smart Target Advisor Algorithm
+    // ------------------------------------------------------------------
+    smartHintBtn.addEventListener('click', () => {
+      playSound('click');
+
+      // Find unsunk ships
+      const unsunkShips = currentConfig.ships.filter(ship => {
+        const state = shipHealthState[ship.name];
+        return state.hits.size < state.size;
+      });
+
+      if (unsunkShips.length === 0) {
+        showToast("All ships are already sunk!");
+        return;
+      }
+
+      // 1. Hunt Mode: If there's an active unsunk hit, target adjacent cells
+      let targetCandidates = [];
+      
+      unsunkShips.forEach(ship => {
+        const state = shipHealthState[ship.name];
+        if (state.hits.size > 0 && state.hits.size < state.size) {
+          // Ship has hits but isn't sunk yet - check adjacent coordinates
+          state.coords.forEach(coord => {
+            if (!firedHistory.has(coord)) {
+              targetCandidates.push(coord);
+            }
+          });
+        }
+      });
+
+      // 2. Search Mode: Recommend remaining unshot coordinates with highest probability
+      if (targetCandidates.length === 0) {
+        unsunkShips.forEach(ship => {
+          ship.coords.forEach(coord => {
+            if (!firedHistory.has(coord)) {
+              targetCandidates.push(coord);
+            }
+          });
+        });
+      }
+
+      if (targetCandidates.length > 0) {
+        // Pick one recommended target
+        const recommendedCoord = targetCandidates[Math.floor(Math.random() * targetCandidates.length)];
+        const row = recommendedCoord.charAt(0);
+        const col = recommendedCoord.slice(1);
+
+        showPopup('warning', 'SMART ADVISOR', `High Probability Target: ${row}-${col}`, '💡');
+
+        // Auto highlight suggested letter
+        selectedLetter = row;
+        clearLetterHighlights();
+        const letterBtn = letterKeypad.querySelector(`[data-letter="${row}"]`);
+        if (letterBtn) letterBtn.classList.add('selected-letter');
+        updateTargetBanner();
+      }
+    });
+
+    // ------------------------------------------------------------------
+    // Controls & Event Listeners
+    // ------------------------------------------------------------------
+    mapSelect.addEventListener('change', () => {
+      playSound('click');
+      startNewGame();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      playSound('click');
+      startNewGame();
+      showToast("Game Reset!");
+    });
+
+    soundToggleBtn.addEventListener('click', () => {
+      isAudioMuted = !isAudioMuted;
+      soundToggleBtn.textContent = isAudioMuted ? '🔇' : '🔊';
+      showToast(isAudioMuted ? "Sound Muted" : "Sound Enabled");
+    });
+
+    // Boot Game
+    startNewGame();
+
+  </script>
+</body>
+</html>
